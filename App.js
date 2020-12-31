@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
-import Card from './Card.js';
+import { StyleSheet, Text, View, ScrollView, SafeAreaView, Animated } from 'react-native';
+import Card, { cardHeight, cardTitle } from './Card.js';
 
 const cards = [
   {
@@ -41,24 +41,59 @@ const cards = [
   }
 ];
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <View style={StyleSheet.absoluteFill}>
-        {
-          cards.map(card => <Card key={card.name} {...card}/>)
-        }
-      </View>
-      <ScrollView />
-    </View>
-  );
+class App extends React.Component {
+  state = {
+    y: new Animated.Value(0)
+  }
+
+  render() {
+
+    const { y } = this.state;
+
+    return (
+      <SafeAreaView style={styles.root}>
+        <View style={styles.container}>
+          <View style={StyleSheet.absoluteFill}>
+            {
+              cards.map((card, i) => {
+                const translateY = y.interpolate({
+                  inputRange: [-cardHeight, 0],
+                  outputRange: [cardHeight * i, (cardHeight - cardTitle) * -i]
+                })
+                return (
+                  <Animated.View key={card.name} style={{transform: [{ translateY }]}}>
+                    <Card
+                      {...card}
+                    />
+                  </Animated.View>
+                )
+              })
+            }
+          </View>
+          <Animated.ScrollView
+            scrollEventThrottle={16}
+            onScroll={Animated.event(
+              [
+                {
+                  nativeEvent: {
+                    contentOffset: { y: this.state.y }
+                }
+            }], { useNativeDriver: true })}
+          />
+        </View>
+      </SafeAreaView>
+    )
+  }
 }
+
+export default App
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flex: 1
   },
+  root: {
+    flex: 1,
+    margin: 16
+  }
 });
